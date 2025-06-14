@@ -40,26 +40,60 @@ if plot == True:
 # --- TF-IDF Analysis Code to Add ---
 print("--- TF-IDF Analysis ---")
 
-# Separate the dataset into negative (0) and positive (1) reviews
-# and drop the 'REVIEW_VALUE' column from these subsets
-dataset_neg = dataset[dataset["REVIEW_VALUE"]
-                      == 0].drop(columns="REVIEW_VALUE")
-dataset_pos = dataset[dataset["REVIEW_VALUE"]
-                      == 1].drop(columns="REVIEW_VALUE")
+word_freq_cols = dataset.columns[0:48]  # Columnas para palabras
+char_freq_cols = dataset.columns[48:54]  # Columnas para caracteres
+spam_df = dataset[dataset["spam"] == 1].drop(columns="spam")
+non_spam_df = dataset[dataset["spam"] == 0].drop(columns="spam")
+# Calcular la media de frecuencia para palabras en SPAM y NO SPAM
+mean_word_freq_spam = spam_df[word_freq_cols].mean(
+).sort_values(ascending=False)
+mean_word_freq_non_spam = non_spam_df[word_freq_cols].mean(
+).sort_values(ascending=False)
 
-# Calculate the mean TF-IDF for each word in negative reviews
-mean_tfidf_neg = dataset_neg.mean().sort_values(ascending=False)
-# Calculate the mean TF-IDF for each word in positive reviews
-mean_tfidf_pos = dataset_pos.mean().sort_values(ascending=False)
+# Calcular la media de frecuencia para símbolos en SPAM y NO SPAM
+mean_char_freq_spam = spam_df[char_freq_cols].mean(
+).sort_values(ascending=False)
+mean_char_freq_non_spam = non_spam_df[char_freq_cols].mean(
+).sort_values(ascending=False)
 
-# Print the top 5 words with the highest average TF-IDF in each class
-print("\n🔴 Palabras más representativas de la clase NEGATIVA:")
-print(mean_tfidf_neg.head(5))
+print("--- Análisis de Frecuencia de Palabras y Símbolos ---")
 
-print("\n🟢 Palabras más representativas de la clase POSITIVA:")
-print(mean_tfidf_pos.head(5))
+print("\n✅ Top 10 palabras más frecuentes en correos SPAM:")
+print(mean_word_freq_spam.head(10))
 
-# Clean up temporary variables to free memory
-del mean_tfidf_neg, mean_tfidf_pos, dataset_neg, dataset_pos
-print("--- TF-IDF Analysis Complete ---")
+print("\n✅ Top 10 palabras más frecuentes en correos NO SPAM:")
+print(mean_word_freq_non_spam.head(10))
+
+print("\n✅ Top 10 símbolos más frecuentes en correos SPAM:")
+print(mean_char_freq_spam.head(6))  # Hay 6 columnas de símbolos, no 10
+
+print("\n✅ Top 10 símbolos más frecuentes en correos NO SPAM:")
+print(mean_char_freq_non_spam.head(6))  # Hay 6 columnas de símbolos, no 10
+
+# Determinar palabras o símbolos en común y llamativos
+# Puedes hacer esto comparando las listas de los top N elementos.
+# Por ejemplo, para palabras en común:
+top_spam_words = set(mean_word_freq_spam.head(10).index)
+top_non_spam_words = set(mean_word_freq_non_spam.head(10).index)
+common_words = top_spam_words.intersection(top_non_spam_words)
+
+print(
+    f"\n¿Hay palabras en común en el top 10 de SPAM y NO SPAM? {'Sí' if common_words else 'No'}")
+if common_words:
+    print(f"Palabras en común: {list(common_words)}")
+
+# Para símbolos en común:
+top_spam_chars = set(mean_char_freq_spam.head(6).index)  # Ajustado a 6
+top_non_spam_chars = set(mean_char_freq_non_spam.head(6).index)  # Ajustado a 6
+common_chars = top_spam_chars.intersection(top_non_spam_chars)
+
+print(
+    f"\n¿Hay símbolos en común en el top 6 de SPAM y NO SPAM? {'Sí' if common_chars else 'No'}")
+if common_chars:
+    print(f"Símbolos en común: {list(common_chars)}")
+
+print("\nConsideraciones sobre palabras/símbolos llamativos:")
+print("- Las palabras o símbolos con una frecuencia promedio significativamente más alta en una categoría que en otra suelen ser más discriminatorias.")
+print("- Por ejemplo, si 'free' aparece mucho más en SPAM que en NO SPAM, es llamativo.")
+print("- Símbolos como '!', '$' o '#' pueden ser más frecuentes en SPAM.")
 # --- End of TF-IDF Analysis Code ---
